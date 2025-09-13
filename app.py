@@ -19,6 +19,7 @@ DB_USER = os.getenv('DB_USER')
 DB_PASS = os.getenv('DB_PASS')
 DB_NAME = os.getenv('DB_NAME')
 
+# ✅ FIX: Use the correct variable names to read from the environment
 EMAIL_USER = os.getenv('EMAIL_USER')
 EMAIL_PASS = os.getenv('EMAIL_PASS')
 RECIPIENT_EMAIL = 'donsavio1one@gmail.com'
