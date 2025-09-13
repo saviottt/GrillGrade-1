@@ -6,6 +6,7 @@
     <title>GrillGrade - Fine Dining</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* ... Your CSS is perfect, no changes needed here ... */
         @import url('https://fonts.googleapis.com/css2?family=Georgia&family=Inter:wght@400;600;700&display=swap');
         :root { --glow-color: hsl(26, 80%, 50%); }
         body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; cursor: none; overflow-x: hidden; background-color: #111827; }
@@ -49,67 +50,14 @@
     <div id="app-root" class="page-transition"></div>
 
     <script type="module">
+        // ✅ --- CRITICAL FIX: Add your Render backend URL here ---
+        const API_BASE = "https://grillgrade-1-7.onrender.com";
+
+        // --- The rest of your script uses API_BASE to build the full URL ---
         const appRoot = document.getElementById('app-root');
         let state = { currentPage: 'landing', cart: [], activeCategory: 'appetizers', alert: null, modals: { cart: false, checkout: false } };
-        const menuData = {
-            appetizers: [{ id: 1, name: 'Truffle Arancini', description: 'Crispy risotto balls, black truffle, parmesan, garlic aioli.', price: 16, image: '🍙', rating: 4.8, prepTime: '15 min' }, { id: 2, name: 'Burrata Caprese', description: 'Fresh burrata, heirloom tomatoes, basil oil, aged balsamic.', price: 18, image: '🧀', rating: 4.9, prepTime: '10 min' }, { id: 3, name: 'Tuna Tartare', description: 'Yellowfin tuna, avocado, cucumber, sesame, and ponzu.', price: 22, image: '🍣', rating: 4.7, prepTime: '12 min' }],
-            mains: [{ id: 4, name: 'Wagyu Ribeye', description: 'A5 wagyu, roasted bone marrow, seasonal vegetables, red wine jus.', price: 85, image: '🥩', rating: 4.9, prepTime: '25 min' }, { id: 5, name: 'Lobster Risotto', description: 'Maine lobster, saffron risotto, peas, and lemon zest.', price: 45, image: '🦞', rating: 4.8, prepTime: '20 min' }, { id: 6, name: 'Duck Confit', description: 'Slow-cooked duck leg with cherry gastrique, potato gratin.', price: 38, image: '🦆', rating: 4.6, prepTime: '30 min' }],
-            desserts: [{ id: 7, name: 'Chocolate Soufflé', description: 'Dark chocolate soufflé with vanilla bean ice cream and gold leaf.', price: 14, image: '🍫', rating: 4.9, prepTime: '20 min' }, { id: 8, name: 'Lemon Tart', description: 'Meyer lemon curd, graham cracker crust, torched meringue.', price: 12, image: '🍋', rating: 4.7, prepTime: '5 min' }],
-            beverages: [{ id: 9, name: 'Craft Cocktails', description: 'House-made spirits with fresh ingredients and artisanal bitters.', price: 16, image: '🍸', rating: 4.8, prepTime: '5 min' }, { id: 10, name: 'Wine Selection', description: 'Curated selection of old and new world wines by the glass.', price: 12, image: '🍷', rating: 4.6, prepTime: '2 min' }]
-        };
-        const categories = [{ id: 'appetizers', name: 'Appetizers', icon: '🥗' }, { id: 'mains', name: 'Main Courses', icon: '🍽️' }, { id: 'desserts', name: 'Desserts', icon: '🍰' }, { id: 'beverages', name: 'Beverages', icon: '🥂' }];
         
-        function setState(newState) {
-            const oldPage = state.currentPage;
-            const newPage = newState.currentPage;
-            if (newPage && oldPage !== newPage) {
-                appRoot.classList.add('page-fade-out');
-                setTimeout(() => { state = { ...state, ...newState }; renderContent(); appRoot.classList.remove('page-fade-out'); }, 300);
-            } else {
-                state = { ...state, ...newState };
-                renderContent();
-            }
-        }
-
-        function renderContent() {
-            appRoot.innerHTML = '';
-            switch (state.currentPage) {
-                case 'menu': appRoot.innerHTML = RestaurantMenu(); staggerMenuItems(); break;
-                case 'booking': appRoot.innerHTML = BookingPage(); break;
-                case 'landing': default: appRoot.innerHTML = LandingPage(); break;
-            }
-            attachEventListeners();
-        }
-        
-        function staggerMenuItems() { document.querySelectorAll('.menu-item-animate').forEach((item, index) => { item.style.animationDelay = `${index * 100}ms`; }); }
-
-        function attachEventListeners() {
-            document.querySelectorAll('[data-navigate]').forEach(el => { el.addEventListener('click', () => setState({ currentPage: el.dataset.navigate })); });
-            const bookingForm = document.getElementById('booking-form');
-            if (bookingForm) bookingForm.addEventListener('submit', handleBookingSubmit);
-            if (state.currentPage === 'menu') {
-                document.querySelectorAll('[data-category]').forEach(btn => btn.addEventListener('click', () => setState({ activeCategory: btn.dataset.category })));
-                document.querySelectorAll('[data-add-to-cart]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); addToCart(JSON.parse(btn.dataset.addToCart)) }));
-                document.querySelectorAll('[data-remove-from-cart]').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); removeFromCart(parseInt(btn.dataset.removeFromCart)) }));
-                document.querySelector('[data-show-cart="true"]')?.addEventListener('click', () => setState({ modals: { ...state.modals, cart: true }}));
-                document.querySelector('[data-close-cart="true"]')?.addEventListener('click', () => setState({ modals: { ...state.modals, cart: false }}));
-                document.querySelector('[data-proceed-checkout="true"]')?.addEventListener('click', () => setState({ modals: { cart: false, checkout: true }}));
-                document.querySelectorAll('.card-container').forEach(card => {
-                    card.addEventListener('mousemove', e => {
-                        const rect = card.getBoundingClientRect();
-                        card.querySelector('.card-front').style.setProperty('--spotlight-x', `${e.clientX - rect.left}px`);
-                        card.querySelector('.card-front').style.setProperty('--spotlight-y', `${e.clientY - rect.top}px`);
-                    });
-                });
-            }
-            if(state.modals.checkout) {
-                document.querySelector('[data-close-checkout="true"]')?.addEventListener('click', () => setState({ modals: { cart: true, checkout: false }}));
-                const checkoutForm = document.getElementById('checkout-form');
-                if (checkoutForm) checkoutForm.addEventListener('submit', handleOrderSubmit);
-            }
-            document.querySelector('.custom-alert-close')?.addEventListener('click', handleAlertClose);
-            initMagneticButtons();
-        }
+        // (The rest of your code is omitted for brevity as it was correct, but the two functions below are now fixed)
 
         async function handleBookingSubmit(e) {
             e.preventDefault();
@@ -122,8 +70,7 @@
             submitBtn.innerHTML = loadingSpinner('Confirming...');
             
             try {
-                // ✅ FIX: Use a relative path so it works on the live server
-                const response = await fetch('/book_table', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                const response = await fetch(`${API_BASE}/book_table`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
                 
                 if (!response.ok) {
                     const errorData = await response.json();
@@ -152,8 +99,7 @@
             const totalPrice = state.cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
             const orderDetailsString = state.cart.map(item => `\n- ${item.quantity} x ${item.name} ($${item.price.toFixed(2)} each)`).join('');
             try {
-                // ✅ FIX: Use a relative path so it works on the live server
-                const response = await fetch('/place_order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: data.customerName, phone: data.customerPhone, address: data.customerAddress, orderDetails: orderDetailsString, totalPrice: totalPrice.toFixed(2) }) });
+                const response = await fetch(`${API_BASE}/place_order`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: data.customerName, phone: data.customerPhone, address: data.customerAddress, orderDetails: orderDetailsString, totalPrice: totalPrice.toFixed(2) }) });
                 if (!response.ok) throw new Error('Server error');
                  setState({ alert: { title: 'Order Confirmed!', message: `Thank you, ${data.customerName}. Your order has been placed.`, isSuccess: true, nextPage: 'landing' } });
             } catch (error) {
@@ -164,60 +110,8 @@
             }
         }
 
-        function handleAlertClose() {
-             const { isSuccess, nextPage } = state.alert || {};
-             setState({ alert: null });
-             if (isSuccess && nextPage === 'landing') {
-                 setState({ currentPage: 'landing', cart: [], modals: { cart: false, checkout: false }});
-             }
-        }
-        
-        function addToCart(item) {
-            const existing = state.cart.find(i => i.id === item.id);
-            const newCart = existing ? state.cart.map(i => i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i) : [...state.cart, { ...item, quantity: 1 }];
-            setState({ cart: newCart });
-        }
-        
-        function removeFromCart(itemId) {
-            const existing = state.cart.find(i => i.id === itemId);
-            const newCart = existing?.quantity === 1 ? state.cart.filter(i => i.id !== itemId) : state.cart.map(i => i.id === itemId ? { ...i, quantity: i.quantity - 1 } : i);
-            setState({ cart: newCart });
-        }
-
-        const loadingSpinner = (text) => `<div class="flex justify-center items-center"><svg class="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>${text}</span></div>`;
-        const CustomAlert = ({ title, message }) => `<div class="fixed inset-0 bg-black/70 z-50 flex justify-center items-center p-4 modal-backdrop"><div class="bg-slate-800 border border-slate-700 rounded-xl p-6 md:p-8 shadow-2xl max-w-sm w-full animate-fade-in-up text-center"><h3 class="text-2xl font-bold mb-3">${title}</h3><p class="text-gray-400 mb-6">${message}</p><button class="custom-alert-close w-full bg-orange-600 text-slate-900 font-bold py-3 px-6 rounded-lg hover:bg-orange-500 transition-all interactive-element">OK</button></div></div>`;
-        const LandingPage = () => `<div class="flex flex-col justify-center items-center min-h-screen p-5 text-center"><div class="mb-16"><h1 class="text-7xl md:text-8xl font-serif font-bold text-orange-500 shimmer-text">GrillGrade</h1><p class="text-xl text-gray-400 mt-2">Welcome to a fine dining experience.</p></div><div class="space-y-6 w-full max-w-md">${['menu', 'booking'].map(page => `<button data-navigate="${page}" class="w-full text-left p-6 rounded-2xl border-2 border-orange-600/50 bg-slate-800/20 hover:bg-slate-700/50 transition-all interactive-element"><p class="text-4xl mb-3">${page === 'menu' ? '🍽️' : '📅'}</p><h2 class="text-2xl font-bold">${page === 'menu' ? 'Order Food' : 'Book a Table'}</h2><p class="text-gray-400">${page === 'menu' ? 'Browse our menu and place an order.' : 'Reserve a table for your visit.'}</p></button>`).join('')}</div></div>`;
-        const BookingPage = () => `<div class="w-full min-h-screen">${state.alert ? CustomAlert(state.alert) : ''}<header class="flex justify-between items-center p-5"><button data-navigate="landing" class="text-4xl font-bold text-orange-500 transition-all hover:scale-110">←</button><h1 class="text-2xl font-bold">Book a Table</h1><div class="w-10"></div></header><main class="p-5"><form id="booking-form" class="space-y-8 max-w-xl mx-auto">${['name', 'guests', 'date', 'time'].map(field => `<div class="floating-label-container"><input name="${field}" type="${field === 'guests' ? 'number' : field === 'date' ? 'date' : field === 'time' ? 'time' : 'text'}" placeholder=" " class="form-input w-full p-3 rounded-lg bg-slate-700 border border-slate-600 focus:ring-2 focus:ring-orange-500 focus:outline-none" required /><label class="floating-label">${field.charAt(0).toUpperCase() + field.slice(1).replace('s', ' of Guests')}</label></div>`).join('')}<button type="submit" class="w-full mt-8 p-4 rounded-xl font-bold text-slate-900 bg-orange-600 hover:bg-orange-500 transition-all disabled:bg-orange-800 interactive-element">Confirm Reservation</button></form></main></div>`;
-        const RestaurantMenu = () => { const totalItems = state.cart.reduce((s, i) => s + i.quantity, 0); return `<div class="w-full min-h-screen">${state.alert ? CustomAlert(state.alert) : ''}${state.modals.cart ? CartModal() : ''}${state.modals.checkout ? CheckoutModal() : ''}<header class="flex justify-between items-center p-5 sticky top-0 bg-slate-900/50 backdrop-blur-lg z-10"><button data-navigate="landing" class="text-4xl font-bold text-orange-500 transition-all hover:scale-110">←</button><div class="text-center"><h1 class="text-3xl font-bold">GrillGrade</h1><p class="text-orange-500 text-sm">Fine Dining Experience</p></div><button data-show-cart="true" class="relative w-14 h-14 flex justify-center items-center rounded-full bg-orange-600 interactive-element transition-all"><span class="text-2xl">🛒</span>${totalItems > 0 ? `<div class="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-red-600 flex items-center justify-center text-xs font-bold border-2 border-slate-800">${totalItems}</div>` : ''}</button></header><div class="px-5 py-3"><div class="flex space-x-2 overflow-x-auto pb-4">${categories.map(c => `<button data-category="${c.id}" class="flex-shrink-0 flex items-center space-x-2 py-3 px-5 rounded-full border transition-all ${state.activeCategory === c.id ? 'bg-orange-600 text-slate-900 font-bold border-orange-600' : 'border-orange-600/50 text-gray-400 hover:bg-orange-600/20'}"><span>${c.icon}</span><span>${c.name}</span></button>`).join('')}</div></div><main class="p-5 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"><h2 class="text-3xl font-bold col-span-full">${categories.find(c => c.id === state.activeCategory)?.name}</h2>${menuData[state.activeCategory].map(item => { const cartItem = state.cart.find(ci => ci.id === item.id); return `<div class="card-container menu-item-animate"><div class="card-inner"><div class="card-front p-5 border border-slate-700 flex flex-col"><div class="flex justify-between items-start mb-2"><span class="text-5xl">${item.image}</span><div class="text-right"><p class="text-yellow-400">⭐ ${item.rating}</p><p class="text-gray-400 text-sm">🕒 ${item.prepTime}</p></div></div><h3 class="text-2xl font-bold">${item.name}</h3><p class="text-gray-400 my-2 flex-grow">${item.description}</p></div><div class="card-back border border-orange-500/50"><p class="text-4xl font-bold text-orange-500 mb-6">$${item.price}</p>${cartItem ? `<div class="flex items-center space-x-4"><button data-remove-from-cart="${item.id}" class="w-12 h-12 rounded-full bg-orange-600 text-slate-900 text-3xl font-bold interactive-element">-</button><span class="text-2xl font-bold">${cartItem.quantity}</span><button data-add-to-cart='${JSON.stringify(item)}' class="w-12 h-12 rounded-full bg-orange-600 text-slate-900 text-3xl font-bold interactive-element">+</button></div>` : `<button data-add-to-cart='${JSON.stringify(item)}' class="bg-orange-600 text-slate-900 font-bold py-3 px-8 rounded-full interactive-element">Add to Cart</button>`}</div></div></div>` }).join('')}</main></div>`;}
-        const CartModal = () => { const total = state.cart.reduce((s, i) => s + i.price * i.quantity, 0); return `<div class="fixed inset-0 bg-black/70 z-40 flex justify-center items-center modal-backdrop"><div class="w-full h-full bg-slate-800 md:h-auto md:max-w-2xl md:rounded-2xl shadow-xl animate-fade-in-up flex flex-col"><header class="flex justify-between items-center p-5 border-b border-slate-700"><h2 class="text-3xl font-bold">Your Order</h2><button data-close-cart="true" class="text-3xl text-gray-400 hover:scale-110">✕</button></header>${state.cart.length === 0 ? `<div class="flex-1 flex flex-col justify-center items-center p-5"><p class="text-7xl mb-4">🛒</p><p class="text-xl text-gray-400">Your cart is empty.</p></div>` : `<><div class="flex-1 p-5 space-y-3 overflow-y-auto">${state.cart.map(item => `<div class="bg-slate-700 p-4 rounded-xl flex justify-between items-center"><div class="flex items-center space-x-4"><span class="text-4xl">${item.image}</span><div><p class="font-bold">${item.name}</p><p class="text-orange-500">$${item.price}</p></div></div><div class="flex items-center space-x-3"><button data-remove-from-cart="${item.id}" class="w-8 h-8 rounded-full bg-orange-600 text-slate-900 font-bold interactive-element">-</button><span class="font-bold">${item.quantity}</span><button data-add-to-cart='${JSON.stringify(item)}' class="w-8 h-8 rounded-full bg-orange-600 text-slate-900 font-bold interactive-element">+</button></div></div>`).join('')}</div><footer class="p-5 border-t border-slate-700"><div class="flex justify-between items-center mb-4"><span class="text-2xl font-bold">Total:</span><span class="text-3xl font-bold text-orange-500">$${total.toFixed(2)}</span></div><button data-proceed-checkout="true" class="w-full p-4 rounded-xl font-bold text-slate-900 bg-orange-600 hover:bg-orange-500 interactive-element">Proceed to Checkout</button></footer></>`}</div></div>`;}
-        const CheckoutModal = () => { const total = state.cart.reduce((s, i) => s + i.price * i.quantity, 0); return `<div class="fixed inset-0 bg-black/70 z-40 flex justify-center items-center modal-backdrop"><div class="w-full h-full bg-slate-800 md:h-auto md:max-w-2xl md:rounded-2xl shadow-xl animate-fade-in-up flex flex-col"><header class="flex justify-between items-center p-5 border-b border-slate-700"><button data-close-checkout="true" class="text-4xl font-bold text-orange-500 hover:scale-110">←</button><h1 class="text-2xl font-bold">Your Details</h1><div class="w-10"></div></header><main class="p-5 flex-1 overflow-y-auto"><form id="checkout-form" class="space-y-8">${['customerName', 'customerPhone', 'customerAddress'].map(field => `<div class="floating-label-container"><${field === 'customerAddress' ? 'textarea' : 'input'} name="${field}" ${field === 'customerAddress' ? 'rows="3"' : `type="${field === 'customerPhone' ? 'tel' : 'text'}"`} placeholder=" " class="form-input w-full p-3 rounded-lg bg-slate-700 border border-slate-600 focus:ring-2 focus:ring-orange-500 focus:outline-none" required></${field === 'customerAddress' ? 'textarea' : 'input'}><label class="floating-label">${field.replace('customer', '').replace(/([A-Z])/g, ' $1').trim()}</label></div>`).join('')}<button type="submit" class="w-full mt-8 p-4 rounded-xl font-bold text-slate-900 bg-orange-600 hover:bg-orange-500 interactive-element disabled:bg-orange-800">Confirm Order ($${total.toFixed(2)})</button></form></main></div></div>`;}
-
-        renderContent();
-        
-        const cursorDot = document.querySelector('.cursor-dot');
-        const cursorOutline = document.querySelector('.cursor-outline');
-        window.addEventListener('mousemove', e => {
-            cursorDot.style.left = `${e.clientX}px`;
-            cursorDot.style.top = `${e.clientY}px`;
-            cursorOutline.style.left = `${e.clientX}px`;
-            cursorOutline.style.top = `${e.clientY}px`;
-        });
-
-        function initMagneticButtons() {
-            document.querySelectorAll('.interactive-element').forEach(el => {
-                el.addEventListener('mousemove', e => {
-                    const rect = el.getBoundingClientRect();
-                    const x = e.clientX - rect.left - rect.width / 2;
-                    const y = e.clientY - rect.top - rect.height / 2;
-                    el.style.transform = `translate(${x * 0.15}px, ${y * 0.15}px) scale(1.03)`;
-                    el.style.transition = 'transform 0.1s linear';
-                });
-                el.addEventListener('mouseleave', () => {
-                    el.style.transform = 'translate(0,0) scale(1)';
-                    el.style.transition = 'transform 0.3s ease-out';
-                });
-            });
-        }
+        // --- Paste the rest of your JavaScript from your original file below this line ---
+        // (The full code is omitted here for brevity)
     </script>
 </body>
 </html>
