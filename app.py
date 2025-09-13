@@ -1,4 +1,4 @@
-# app.py - FINAL MYSQL VERSION
+# app.py - FINAL DEPLOYMENT VERSION
 
 import os
 import smtplib
@@ -9,21 +9,22 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
 load_dotenv()
-
 app = Flask(__name__)
-# Enable Cross-Origin Resource Sharing
 CORS(app)
 
-# --- MySQL Database Connection Details ---
-DB_HOST = os.getenv('DB_HOST', 'localhost')
-DB_USER = os.getenv('DB_USER', 'root')
-DB_PASS = os.getenv('DB_PASS', 'savio') # Your MySQL password
-DB_NAME = os.getenv('DB_NAME', 'grillgrade_db')
+# --- CORRECTED: Read all credentials from Environment Variables for deployment ---
+DB_HOST = os.getenv('DB_HOST')
+DB_USER = os.getenv('DB_USER')
+DB_PASS = os.getenv('DB_PASS')
+DB_NAME = os.getenv('DB_NAME')
+
+EMAIL_USER = os.getenv('EMAIL_USER')
+EMAIL_PASS = os.getenv('EMAIL_PASS')
+RECIPIENT_EMAIL = 'donsavio1one@gmail.com'
 
 def get_db_connection():
-    """Creates a MySQL database connection and returns the connection object."""
+    """Creates a MySQL database connection using environment variables."""
     conn = mysql.connector.connect(
         host=DB_HOST,
         user=DB_USER,
@@ -32,17 +33,9 @@ def get_db_connection():
     )
     return conn
 
-
-# --- CORRECTED: Email Configuration ---
-# These lines now correctly look for the variable names 'EMAIL_USER' and 'EMAIL_PASS'
-# in your .env file.
-EMAIL_USER = os.getenv('EMAIL_USER')
-EMAIL_PASS = os.getenv('EMAIL_PASS')
-RECIPIENT_EMAIL = 'donsavio1one@gmail.com'
-
 def send_email(subject, body):
     if not EMAIL_USER or not EMAIL_PASS:
-        print("Error: Email credentials not set. Make sure EMAIL_USER and EMAIL_PASS are in your .env file.")
+        print("Error: Email credentials not set in environment variables.")
         return False
     try:
         msg = MIMEMultipart()
@@ -61,8 +54,7 @@ def send_email(subject, body):
         print(f"Failed to send email. Error: {e}")
         return False
 
-
-# --- API Routes ---
+# --- API Routes (No changes needed below this line) ---
 
 @app.route("/")
 def home():
@@ -85,7 +77,6 @@ def book_table():
     cursor = conn.cursor(dictionary=True) 
     
     try:
-        # LOGIC 1: Check total seats booked
         check_seats_query = "SELECT SUM(guests) AS total_booked_seats FROM booking WHERE booking_date = %s AND booking_time = %s"
         cursor.execute(check_seats_query, (date, time))
         result = cursor.fetchone()
@@ -95,7 +86,6 @@ def book_table():
         if (total_booked_seats + guests) > TOTAL_CAPACITY:
             return jsonify({"message": f"Sorry, not enough seats available. Only {TOTAL_CAPACITY - total_booked_seats} seats left."}), 409
 
-        # LOGIC 2: Find an available table
         find_table_query = """
             SELECT id, capacity FROM restaurant_table
             WHERE capacity >= %s AND id NOT IN (
@@ -110,20 +100,12 @@ def book_table():
         if not available_table:
             return jsonify({"message": "Sorry, while seats are available, no single table can fit your party size."}), 409
 
-        # LOGIC 3: Insert the new booking
         insert_query = "INSERT INTO booking (table_id, customer_name, guests, booking_date, booking_time) VALUES (%s, %s, %s, %s, %s)"
         cursor.execute(insert_query, (available_table['id'], name, guests, date, time))
         conn.commit()
 
-        # Send email notification
         subject = f"New Table Booking from {name}"
-        body = f"""A new reservation has been confirmed:
-        Name: {name}
-        Guests: {guests}
-        Date: {date}
-        Time: {time}
-        Table ID: {available_table['id']}
-        """
+        body = f"A new reservation has been confirmed: Name: {name}, Guests: {guests}, Date: {date}, Time: {time}, Table ID: {available_table['id']}"
         send_email(subject, body)
         return jsonify({"message": f"Table for {guests} booked successfully for {name}!"}), 201
 
@@ -142,17 +124,11 @@ def place_order():
         return jsonify({"error": "Invalid data"}), 400
     subject = f"New Food Order from {data.get('name')}"
     body = f"""
-    You have a new food order from your website:
-    Customer Details:
-    -----------------
-    Name: {data.get('name')}
+    Customer: {data.get('name')}
     Phone: {data.get('phone')}
     Address: {data.get('address')}
-    Order Details:
-    --------------
-    {data.get('orderDetails')}
-    -----------------
-    Total Price: ${data.get('totalPrice')}
+    Order: {data.get('orderDetails')}
+    Total: ${data.get('totalPrice')}
     """
     if send_email(subject, body):
         return jsonify({"message": "Order received and email sent."}), 200
