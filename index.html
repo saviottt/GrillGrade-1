@@ -310,7 +310,6 @@
         }
 
         // --- API CALLS & HANDLERS ---
-        // --- ✅ FIX: THIS ENTIRE FUNCTION IS NOW UPDATED ---
         async function handleBookingSubmit(e) {
             e.preventDefault();
             const form = e.target;
@@ -322,7 +321,8 @@
             submitBtn.innerHTML = loadingSpinner('Confirming...');
             
             try {
-                const response = await fetch('http://127.0.0.1:5000/book_table', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+                // ✅ FIX: Use a relative path for the deployed server
+                const response = await fetch('/book_table', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
                 
                 if (!response.ok) {
                     const errorData = await response.json();
@@ -352,7 +352,8 @@
             const totalPrice = state.cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
             const orderDetailsString = state.cart.map(item => `\n- ${item.quantity} x ${item.name} ($${item.price.toFixed(2)} each)`).join('');
             try {
-                const response = await fetch('http://127.0.0.1:5000/place_order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: data.customerName, phone: data.customerPhone, address: data.customerAddress, orderDetails: orderDetailsString, totalPrice: totalPrice.toFixed(2) }) });
+                // ✅ FIX: Use a relative path for the deployed server
+                const response = await fetch('/place_order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: data.customerName, phone: data.customerPhone, address: data.customerAddress, orderDetails: orderDetailsString, totalPrice: totalPrice.toFixed(2) }) });
                 if (!response.ok) throw new Error('Server error');
                  setState({ alert: { title: 'Order Confirmed!', message: `Thank you, ${data.customerName}. Your order has been placed.`, isSuccess: true, nextPage: 'landing' } });
             } catch (error) {
