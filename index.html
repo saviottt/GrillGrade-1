@@ -292,11 +292,11 @@
                 document.querySelector('[data-proceed-checkout="true"]')?.addEventListener('click', () => setState({ modals: { cart: false, checkout: true }}));
                 // Spotlight listener
                  document.querySelectorAll('.card-container').forEach(card => {
-                     card.addEventListener('mousemove', e => {
-                         const rect = card.getBoundingClientRect();
-                         card.querySelector('.card-front').style.setProperty('--spotlight-x', `${e.clientX - rect.left}px`);
-                         card.querySelector('.card-front').style.setProperty('--spotlight-y', `${e.clientY - rect.top}px`);
-                     });
+                      card.addEventListener('mousemove', e => {
+                           const rect = card.getBoundingClientRect();
+                           card.querySelector('.card-front').style.setProperty('--spotlight-x', `${e.clientX - rect.left}px`);
+                           card.querySelector('.card-front').style.setProperty('--spotlight-y', `${e.clientY - rect.top}px`);
+                      });
                  });
             }
             
@@ -310,6 +310,7 @@
         }
 
         // --- API CALLS & HANDLERS ---
+        // --- ✅ FIX: THIS ENTIRE FUNCTION IS NOW UPDATED ---
         async function handleBookingSubmit(e) {
             e.preventDefault();
             const form = e.target;
@@ -319,13 +320,20 @@
             const submitBtn = form.querySelector('button[type="submit"]');
             submitBtn.disabled = true;
             submitBtn.innerHTML = loadingSpinner('Confirming...');
+            
             try {
-                // MODIFIED LINE BELOW
                 const response = await fetch('http://127.0.0.1:5000/book_table', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-                if (!response.ok) throw new Error('Server error');
-                setState({ alert: { title: 'Booking Confirmed!', message: `Thank you, ${data.name}. Your table for ${data.guests} is booked.`, isSuccess: true, nextPage: 'landing' }});
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'An unknown server error occurred.');
+                }
+                
+                const successData = await response.json();
+                setState({ alert: { title: 'Booking Confirmed!', message: successData.message, isSuccess: true, nextPage: 'landing' }});
+
             } catch (error) {
-                setState({ alert: { title: 'Submission Error', message: 'Could not connect to the server.' } });
+                setState({ alert: { title: 'Booking Failed', message: error.message } });
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = 'Confirm Reservation';
@@ -344,12 +352,11 @@
             const totalPrice = state.cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
             const orderDetailsString = state.cart.map(item => `\n- ${item.quantity} x ${item.name} ($${item.price.toFixed(2)} each)`).join('');
             try {
-                // MODIFIED LINE BELOW
                 const response = await fetch('http://127.0.0.1:5000/place_order', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: data.customerName, phone: data.customerPhone, address: data.customerAddress, orderDetails: orderDetailsString, totalPrice: totalPrice.toFixed(2) }) });
                 if (!response.ok) throw new Error('Server error');
                  setState({ alert: { title: 'Order Confirmed!', message: `Thank you, ${data.customerName}. Your order has been placed.`, isSuccess: true, nextPage: 'landing' } });
             } catch (error) {
-                 setState({ alert: { title: 'Sorry!', message: 'Tables Are Reserved on the mentioned Time' } });
+                setState({ alert: { title: 'Order Error', message: 'Could not submit your order. Please try again later.' } });
             } finally {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = `Confirm Order ($${totalPrice.toFixed(2)})`;
@@ -357,7 +364,7 @@
         }
 
         function handleAlertClose() {
-             const { isSuccess, nextPage } = state.alert;
+             const { isSuccess, nextPage } = state.alert || {};
              setState({ alert: null });
              if (isSuccess && nextPage === 'landing') {
                  setState({ currentPage: 'landing', cart: [], modals: { cart: false, checkout: false }});
