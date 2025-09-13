@@ -1,0 +1,2 @@
+EMAIL_USER=donsavio1one@gmail.com
+EMAIL_PASS=dynvcwaynzjevhol
