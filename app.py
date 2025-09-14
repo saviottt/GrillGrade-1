@@ -14,10 +14,11 @@ app = Flask(__name__)
 CORS(app)
 
 # --- CORRECTED: Read all credentials from Environment Variables for deployment ---
-DB_HOST = os.getenv('DB_HOST', 'localhost')
-DB_USER = os.getenv('DB_USER', 'root')
-DB_PASS = os.getenv('DB_PASS', '')
-DB_NAME = os.getenv('DB_NAME', 'grillgrade_db')
+DB_HOST = os.getenv('DB_HOST')
+DB_PORT = os.getenv('DB_PORT') # FIX: Added DB_PORT for Railway connection
+DB_USER = os.getenv('DB_USER')
+DB_PASS = os.getenv('DB_PASS')
+DB_NAME = os.getenv('DB_NAME')
 
 EMAIL_USER = os.getenv('EMAIL_USER')
 EMAIL_PASS = os.getenv('EMAIL_PASS')
@@ -25,8 +26,10 @@ RECIPIENT_EMAIL = 'donsavio1one@gmail.com'
 
 def get_db_connection():
     """Creates a MySQL database connection using environment variables."""
+    # FIX: Added the port to the connection arguments
     conn = mysql.connector.connect(
         host=DB_HOST,
+        port=DB_PORT,
         user=DB_USER,
         password=DB_PASS,
         database=DB_NAME
@@ -62,7 +65,7 @@ def home():
 
 @app.route('/book_table', methods=['POST'])
 def book_table():
-    data = request.get_json()
+    data = request.get.json()
     if not data:
         return jsonify({"error": "Invalid data"}), 400
     try:
@@ -119,7 +122,7 @@ def book_table():
 
 @app.route('/place_order', methods=['POST'])
 def place_order():
-    data = request.get_json()
+    data = request.get.json()
     if not data:
         return jsonify({"error": "Invalid data"}), 400
     subject = f"New Food Order from {data.get('name')}"
